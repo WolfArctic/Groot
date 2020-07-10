@@ -56,12 +56,18 @@ add_subdirectory( QtNodeEditor )
 
 set(BUILD_EXAMPLES   OFF CACHE BOOL "")
 set(BUILD_UNIT_TESTS OFF CACHE BOOL "")
-set(BUILD_TOOLS OFF CACHE BOO "")
+set(BUILD_TOOLS OFF CACHE BOOL "")
+set(BUILD_TESTING OFF CACHE BOOL "")
+set(CATKIN_ENABLE_TESTING OFF CACHE BOOL "")
 
 if(NOT catkin_FOUND)
-    # use git submodule only if you are not compiling with catkin
-    add_subdirectory( depend/BehaviorTree.CPP )
-    include_directories( depend/BehaviorTree.CPP/include )
+    # look for BehaviorTree.CPP on the system
+    find_package(BehaviorTree)
+    if (NOT BehaviorTree_FOUND)
+        # use git submodule only if you are not compiling with catkin
+        add_subdirectory( depend/BehaviorTree.CPP )
+        include_directories( depend/BehaviorTree.CPP/include )
+    endif()
 endif()
 
 ##########################################
@@ -136,7 +142,7 @@ target_link_libraries(behavior_tree_editor ${GROOT_DEPENDENCIES} )
 
 
 add_executable(Groot ./bt_editor/main.cpp  ${RESOURCE_FILES})
-target_link_libraries(Groot behavior_tree_editor behaviortree_cpp_v3 )
+target_link_libraries(Groot behavior_tree_editor )
 
 add_subdirectory(test)
 
@@ -159,6 +165,7 @@ else()
     
 endif()
 
+INSTALL(TARGETS behavior_tree_editor LIBRARY DESTINATION ${GROOT_LIB_DESTINATION} )
 INSTALL(TARGETS Groot RUNTIME DESTINATION ${GROOT_BIN_DESTINATION} )
 
 

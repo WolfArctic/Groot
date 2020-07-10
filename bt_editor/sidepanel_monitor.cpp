@@ -51,7 +51,8 @@ void SidepanelMonitor::on_timer()
 
             for(size_t offset = 4; offset < header_size +4; offset +=3 )
             {
-                uint16_t index = flatbuffers::ReadScalar<uint16_t>(&buffer[offset]);
+                uint16_t uid = flatbuffers::ReadScalar<uint16_t>(&buffer[offset]);
+                const uint16_t index = _uid_to_index.at(uid);
                 AbstractTreeNode* node = _loaded_tree.node( index );
                 node->status = convert(flatbuffers::ReadScalar<Serialization::NodeStatus>(&buffer[offset+2] ));
             }
@@ -162,11 +163,27 @@ void SidepanelMonitor::on_Connect()
             address = ui->lineEdit->placeholderText();
             ui->lineEdit->setText(address);
         }
+
+        QString publisher_port = ui->lineEdit_publisher->text();
+        if( publisher_port.isEmpty() )
+        {
+            publisher_port = ui->lineEdit_publisher->placeholderText();
+            ui->lineEdit_publisher->setText(publisher_port);
+        }
+
+        QString server_port = ui->lineEdit_server->text();
+        if( server_port.isEmpty() )
+        {
+          publisher_port = ui->lineEdit_server->placeholderText();
+          ui->lineEdit_server->setText(publisher_port);
+        }
+
         bool failed = false;
         if( !address.isEmpty() )
         {
-            _connection_address_pub = "tcp://" + address.toStdString() + std::string(":1666");
-            _connection_address_req = "tcp://" + address.toStdString() + std::string(":1667");
+            _connection_address_pub = "tcp://" + address.toStdString() + ":" + publisher_port.toStdString();
+            _connection_address_req = "tcp://" + address.toStdString() + ":" + server_port.toStdString();
+
             try{
                 _zmq_subscriber.connect( _connection_address_pub.c_str() );
 
@@ -193,6 +210,7 @@ void SidepanelMonitor::on_Connect()
         {
             _connected = true;
             ui->lineEdit->setDisabled(true);
+            ui->lineEdit_publisher->setDisabled(true);
             _timer->start(20);
             connectionUpdate(true);
         }
@@ -206,6 +224,7 @@ void SidepanelMonitor::on_Connect()
     else{
         _connected = false;
         ui->lineEdit->setDisabled(false);
+        ui->lineEdit_publisher->setDisabled(false);
         _timer->stop();
 
         connectionUpdate(false);
